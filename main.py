@@ -82,12 +82,12 @@ for i in range(len(files)):
                         modified_transaction += input['scriptsig_asm'].split(" ")[1][-2:] + "0"*6
                         message = sha256(bytes.fromhex(modified_transaction)).digest()
                         vk = VerifyingKey.from_string(pub_key, curve=ecdsa.SECP256k1)
-                        if hash160(pub_key).hex() != pkhash:
-                            # print(pkhash)
-                            # print(hash160(pub_key).hex())
-                            # print("pkhash not matching")
-                            invalid_transactions.add(file_name)
-                            break
+                        # if hash160(pub_key).hex() != pkhash:
+                        #     # print(pkhash)
+                        #     # print(hash160(pub_key).hex())
+                        #     # print("pkhash not matching")
+                        #     invalid_transactions.add(file_name)
+                        #     break
                         try:
                             # Verify the signature
                             result = vk.verify(bytes.fromhex(sig), message, hashfunc=sha256)
