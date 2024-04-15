@@ -33,7 +33,7 @@ def merkle_root(txids):
         for i in range(0, len(txids), 2):
             new_txids.append(sha256(sha256(bytes.fromhex(txids[i]+txids[i+1])).digest()).digest().hex())
         txids = new_txids
-    return txids[0]
+    return bytes.fromhex(txids[0])[::-1].hex()
 
 def construct_block_header(txids):
     target = "0000ffff00000000000000000000000000000000000000000000000000000000"
