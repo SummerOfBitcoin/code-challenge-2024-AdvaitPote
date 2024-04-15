@@ -22,7 +22,7 @@ def merkle_root(txids):
     if len(txids) == 0:
         return ""
     if len(txids) == 1:
-        return txids[0][::-1]
+        return txids[0]
     # txids = [bytes.fromhex(txid)[::-1].hex() for txid in txids]
     while True:
         new_txids = []
@@ -223,8 +223,8 @@ with open("coinbase.json", 'r') as file:
         coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
         coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
         # coinbase_data['vout'][0]['value'] = 625000000 + fees
-        # print(coinbase_data)
-        # print(serialize(coinbase_data))
+        print(coinbase_data)
+        print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
 
@@ -256,10 +256,10 @@ for txname in transaction_fees:
 # print(len(block_arr))
 # print(len(transaction_fees))
 
-print(block_arr[1:3])
-print(merkle_root(block_arr[1:3]))
-print(construct_block_header(block_arr[1:3]))
-block_header = construct_block_header(block_arr[1:3])
+print(block_arr[1:2])
+print(merkle_root(block_arr[1:2]))
+print(construct_block_header(block_arr[1:2]))
+block_header = construct_block_header(block_arr[1:2])
 block_arr = [block_header] + block_arr
 # print(block_arr[0])
 # print(block_arr[1])
@@ -271,7 +271,7 @@ try:
     # Open the file in write mode
     with open("output.txt", 'w') as file:
         # Write each element of the list to the file
-        for element in block_arr[:4]:
-            file.write(element[::-1] + '\n') 
+        for element in block_arr[:3]:
+            file.write(element + '\n') 
 except Exception as e:
     print(f"Error writing to file: {e}")
