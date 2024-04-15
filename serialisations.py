@@ -13,6 +13,14 @@ import base58
 import os
 import json
 from hashlib import sha256
+import bech32
+import binascii
+
+def bech_32(data):
+    spk = binascii.unhexlify(data)
+    version = spk[0] - 0x50 if spk[0] else 0
+    program = spk[2:]
+    return bech32.encode('bc', version, program)
 
 def hash160(data):
     sha256_hash = hashlib.sha256(data).digest()
@@ -76,3 +84,38 @@ def serialize(data):
     transaction += data['locktime'].to_bytes(4, byteorder='little').hex()        
     serialize_review += data['locktime'].to_bytes(4, byteorder='little').hex()        
     return (transaction, serialize_review)
+
+def preimage(data, i, is_p2wsh=False):
+    input = data['vin'][i]
+    transaction = serialize(data)[0]
+    version = transaction[:8] #
+    txvouts = ""
+    seqs = ""
+    for j in range(len(data['vin'])):
+        txid = bytes.fromhex(data['vin'][j]['txid'])[::-1].hex()
+        vout = data['vin'][j]['vout'].to_bytes(4, byteorder='little').hex()
+        sequence = data['vin'][j]['sequence'].to_bytes(4, byteorder='little').hex()
+        txvouts += txid
+        txvouts += vout
+        seqs += sequence
+    seqs = sha256(sha256(bytes.fromhex(seqs)).digest()).digest().hex()
+    # print(txvouts)
+    # seqs = sha256(sha256(bytes.fromhex(seqs)).digest()).digest().hex()
+    hash_inputs = sha256(sha256(bytes.fromhex(txvouts)).digest()).digest().hex() #
+    inputs = bytes.fromhex(input['txid'])[::-1].hex() +input['vout'].to_bytes(4, byteorder='little').hex() #
+    pkhash = input['prevout']['scriptpubkey_asm'].split(" ")[2]
+    if is_p2wsh:
+        scriptcode = compact_size(int(len(input['witness'][-1])/2)).hex() + input['witness'][-1]
+    else:
+        scriptcode = "1976a914" + pkhash + "88ac" #
+    amount = input['prevout']['value'].to_bytes(8, byteorder='little').hex()      #
+    sequence = input['sequence'].to_bytes(4, byteorder='little').hex() #
+    outputs  = ""
+    for output in data['vout']:
+        value = output['value'].to_bytes(8, byteorder='little').hex()      
+        size = compact_size(int(len(output['scriptpubkey'])/2)).hex()
+        outputs += (value + size + output['scriptpubkey'])
+    # print(outputs)
+    hash_outputs = sha256(sha256(bytes.fromhex(outputs)).digest()).digest().hex() #
+    locktime = data['locktime'].to_bytes(4, byteorder='little').hex()        #
+    return (version + hash_inputs + seqs + inputs + scriptcode + amount + sequence + hash_outputs + locktime + input['witness'][0][-2:] + "000000")

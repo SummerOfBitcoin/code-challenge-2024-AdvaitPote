@@ -11,14 +11,63 @@ from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError
 import ecdsa
 from hashlib import sha256
 import base58
-import os
+import os, time
 import json
 from hashlib import sha256
 from serialisations import serialize, hash160, decode_sig
+from verifications import verify_p2pkh, verify_p2wpkh, verify_p2wsh, verify_p2sh
+import requests, itertools
+
+def merkle_root(txids):
+    if len(txids) == 0:
+        return ""
+    if len(txids) == 1:
+        return txids[0]
+    txids = [bytes.fromhex(txid)[::-1].hex() for txid in txids]
+    while True:
+        new_txids = []
+        if len(txids) == 1:
+            break
+        if len(txids) % 2 == 1:
+            txids.append(txids[-1])
+        for i in range(0, len(txids), 2):
+            new_txids.append(sha256(sha256(bytes.fromhex(txids[i]+txids[i+1])).digest()).digest().hex())
+        txids = new_txids
+    return txids[0]
+
+def construct_block_header(txids):
+    target = "0000ffff00000000000000000000000000000000000000000000000000000000"
+    merkle = bytes.fromhex(merkle_root(txids))[::-1].hex()
+    unix_time = bytes.fromhex(hex(int(time.time()))[2:])[::-1].hex()
+    target_bits = bytes.fromhex("1f00ffff")[::-1].hex()
+    header_pre_nonce = "0"*72 + merkle + unix_time + target_bits
+    hex_chars = '0123456789ABCDEF'
+    nonces = itertools.product(hex_chars, repeat=8)
+    # print(header_pre_nonce)
+    for nonce in nonces:
+        nonce = ''.join(nonce)  
+        block_header = header_pre_nonce + nonce
+        if sha256(sha256(bytes.fromhex(block_header)).digest()).digest() < bytes.fromhex(target):
+            break
+    # print(sha256(sha256(bytes.fromhex(block_header)).digest()).digest().hex())
+    return block_header
+
+def get_current_block_height():
+    url = 'https://blockchain.info/latestblock'
+    response = requests.get(url)
+    if response.status_code == 200:
+        block_data = response.json()
+        return block_data.get('height')
+    else:
+        print('Failed to fetch block height:', response.status_code)
+        return None
 
 files = os.listdir('mempool') 
 invalid_transactions = set([])
+valid_transactions = set([])
+transactions = set([])
 ds_inputs = set([]) # set to check double spending of inputs
+p2pkh_tx = {}
 for i in range(len(files)): 
     file_name = files[i]
     with open('mempool/' + file_name, 'r') as file:
@@ -63,62 +112,165 @@ for i in range(len(files)):
                 if 'witness' in input:
                     wit = True
                     break
-            if not wit:
-                for j in range(len(data['vin'])):
-                    if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":                        
-                        input = data['vin'][j]
-                        modified_transaction = transaction
-                        scriptsig = hex(int(len(input['scriptsig'])/2))[2:] + input['scriptsig']
-                        scriptpubkey = hex(int(len(input['prevout']['scriptpubkey'])/2))[2:] + input['prevout']['scriptpubkey']
-                        pub_key = bytes.fromhex(input['scriptsig_asm'].split(" ")[3])
-                        pkhash = input['prevout']['scriptpubkey_asm'].split(" ")[3]
-                        for k in range(len(data['vin'])):
-                            scriptsig_replace =  hex(int(len(data['vin'][k]['scriptsig'])/2))[2:] + data['vin'][k]['scriptsig']
-                            sig = decode_sig(str(input['scriptsig_asm'].split(" ")[1][:-2]))
-                            if k == j:
-                                modified_transaction = modified_transaction.replace(scriptsig, scriptpubkey)
-                            else:
-                                modified_transaction = modified_transaction.replace(scriptsig_replace, "00")
-                        modified_transaction += input['scriptsig_asm'].split(" ")[1][-2:] + "0"*6
-                        message = sha256(bytes.fromhex(modified_transaction)).digest()
-                        vk = VerifyingKey.from_string(pub_key, curve=ecdsa.SECP256k1)
-                        # if hash160(pub_key).hex() != pkhash:
-                        #     # print(pkhash)
-                        #     # print(hash160(pub_key).hex())
-                        #     # print("pkhash not matching")
-                        #     invalid_transactions.add(file_name)
-                        #     break
-                        try:
-                            # Verify the signature
-                            result = vk.verify(bytes.fromhex(sig), message, hashfunc=sha256)
-                            # print("Signature is valid.")
-                        except BadSignatureError:
-                            invalid_transactions.add(file_name)
-                            break
-                            # print("Signature is invalid.")
-                        address = "00" + pkhash + sha256(sha256(bytes.fromhex("00" + pkhash)).digest()).digest().hex()[:8] 
-                        if base58.b58encode(bytes.fromhex(address)).decode('utf-8') != input['prevout']['scriptpubkey_address']:
-                            invalid_transactions.add(file_name)
+            # if not wit:
+            #     for j in range(len(data['vin'])):
+            #         if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":       
+            #             transactions.add(file_name)
+            #             is_valid = verify_p2pkh(data, j)                 
+            #             if not is_valid:
+            #                 invalid_transactions.add(file_name)
+            #                 break
+
+            # for j in range(len(data['vin'])):
+            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wpkh":       
+            #         transactions.add(file_name)
+            #         is_valid = verify_p2wpkh(data, j)                 
+            #         if not is_valid:
+            #             invalid_transactions.add(file_name)
+            #             break
+                    
+            # for j in range(len(data['vin'])):
+            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wsh":       
+            #         transactions.add(file_name)
+            #         is_valid = verify_p2wsh(data, j)                 
+            #         if not is_valid:
+            #             invalid_transactions.add(file_name)
+            #             break
+
+            # for j in range(len(data['vin'])):
+            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
+            #         transactions.add(file_name)
+            #         is_valid = verify_p2sh(data, j)                 
+            #         if not is_valid:
+            #             invalid_transactions.add(file_name)
+                        # break
+
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
 # with open("coinbase.json", r) as file:
 #     coinbase = serialize(json.load(file))[0]
 
-bh = "04e00020e3e954a25562ccde401f8b2ade53f1e27cbf4db242bd0b000000000000000000c937f59a3635f492e8218c75b2492c6e1d59d1483a09341357e4fbfd4e0f923039c3fe6024961417c511768c"
+# bh = "04e00020e3e954a25562ccde401f8b2ade53f1e27cbf4db242bd0b000000000000000000c937f59a3635f492e8218c75b2492c6e1d59d1483a09341357e4fbfd4e0f923039c3fe6024961417c511768c"
 
 filename = "output.txt"
 
-with open(filename, 'w') as f:
-    f.write("00c0302f0000000000000000000000000000000000000000000000000000000000000000a3ef233f14ba98926b46f54da52f0cc41853929ebd8f0980bee16a9d25cb60a04aaf1666ffff001f000eeecb")
-    f.write("\n")
-    f.write("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff03123456ffffffff01c8c54025000000004341047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac00000000")
-    f.write("\n")
-    f.write("84e2dddfa0b94f5a7bf8980d149bfeece715c74f076f62f2336d2bd6fb91b70a")
-    f.write("\n")
-    f.write("5a7dade6861861af5c072b427bb4f94dec85ded01a0f8f04b2bd895d2da773fd")
-    f.write("\n")
+# print(valid_transactions)
 
+valid_transactions_new = set([])
+
+# try:
+#     with open(filename, 'r') as file:
+#         # Read each line and append to the elements list
+#         for line in file:
+#             valid_transactions_new.add(line.strip())  # Remove whitespace characters like '\n'
+# except FileNotFoundError:
+#     print(f"Error: File '{filename}' not found.")
+
+# for tx in transactions:
+#     if tx not in invalid_transactions:
+#         valid_transactions.add(tx)
+
+# with open("filename.txt", 'w') as f:
+#     for tx in sorted(valid_transactions):
+#         f.write(tx)
+#         f.write("\n")
+
+try:
+    with open("txs.txt", 'r') as file:
+        # Read each line and append to the elements list
+        for line in file:
+            valid_transactions_new.add(str(line.strip()))  # Remove whitespace characters like '\n'
+except FileNotFoundError:
+    print(f"Error: File txs.txt not found.")
+
+# print(valid_transactions_new)
+
+# print(len(invalid_transactions))
+print(len(valid_transactions_new))
+# print(len(transactions))
+
+fees = 0
+transaction_fees = {}
+# for i in range(len(valid_transactions)):
+for file_name in valid_transactions_new:
+    # file_name = valid_transactions[i]
+    with open('mempool/' + file_name, 'r') as file:
+        try:
+            data = json.load(file)
+            input_sum = 0
+            output_sum = 0
+            for input in data['vin']:
+                input_sum += input['prevout']['value']
+            for output in data['vout']:
+                output_sum += output['value']
+            transaction_fees[file_name] = input_sum - output_sum
+            fees += (input_sum - output_sum)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
+
+transaction_fees = dict(sorted(transaction_fees.items(), key=lambda item: item[1], reverse=True))
+# print(transaction_fees)
+
+block_arr = []
+
+with open("coinbase.json", 'r') as file:
+    try:
+        coinbase_data = json.load(file)
+        coinbase_data['vin'][0]['scriptsig'] = ""
+        block_height = get_current_block_height()
+        coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
+        coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
+        # coinbase_data['vout'][0]['value'] = 625000000 + fees
+        print(coinbase_data)
+        print(serialize(coinbase_data))
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON in file {file}: {e}")
+
+block_weight = 80 # size of block header at start
+
+block_arr.append(serialize(coinbase_data)[1])
+block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
+
+block_weight += int(len(serialize(coinbase_data)[1])/2)
+block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())/2)
+for txname in transaction_fees:
+    # if block_weight > 200000: 
+    #     break
+    with open('mempool/' + txname, 'r') as file:
+        try:
+            data = json.load(file)
+            txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
+            block_weight += int(len(txid)/2)
+            block_arr.append(txid)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
+
+
+print(merkle_root(block_arr[1:]))         
+print(block_arr[0])
+print(block_arr[1])
+print(block_arr[2])
+print(block_arr[3])
+print(len(block_arr))
+print(len(transaction_fees))
+
+print(block_arr[1:3])
+print(merkle_root(block_arr[1:3]))
+print(construct_block_header(block_arr[1:]))
+block_header = construct_block_header(block_arr[1:])
+block_arr = [block_header] + block_arr
+print(block_arr[0])
+print(block_arr[1])
+print(block_arr[2])
+print(block_arr[3])
+print(len(block_arr))
     
-print(invalid_transactions)
-print(len(invalid_transactions))
+try:
+    # Open the file in write mode
+    with open("output.txt", 'w') as file:
+        # Write each element of the list to the file
+        for element in block_arr:
+            file.write(element + '\n') 
+except Exception as e:
+    print(f"Error writing to file: {e}")
