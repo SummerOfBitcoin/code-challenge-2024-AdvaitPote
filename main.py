@@ -33,7 +33,8 @@ def merkle_root(txids):
         for i in range(0, len(txids), 2):
             new_txids.append(sha256(sha256(bytes.fromhex(txids[i]+txids[i+1])).digest()).digest().hex())
         txids = new_txids
-    return bytes.fromhex(txids[0])[::-1].hex()
+    # return bytes.fromhex(txids[0])[::-1].hex()
+    return txids[0]
 
 def construct_block_header(txids):
     target = "0000ffff00000000000000000000000000000000000000000000000000000000"
@@ -222,8 +223,8 @@ with open("coinbase.json", 'r') as file:
         coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
         coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
         # coinbase_data['vout'][0]['value'] = 625000000 + fees
-        print(coinbase_data)
-        print(serialize(coinbase_data))
+        # print(coinbase_data)
+        # print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
 
@@ -247,23 +248,23 @@ for txname in transaction_fees:
             print(f"Error decoding JSON in file {file}: {e}")
 
 
-print(merkle_root(block_arr[1:3]))         
-print(block_arr[0])
-print(block_arr[1])
-print(block_arr[2])
-print(block_arr[3])
-print(len(block_arr))
-print(len(transaction_fees))
+# print(merkle_root(block_arr[1:3]))         
+# print(block_arr[0])
+# print(block_arr[1])
+# print(block_arr[2])
+# print(block_arr[3])
+# print(len(block_arr))
+# print(len(transaction_fees))
 
 print(block_arr[1:3])
 print(merkle_root(block_arr[1:3]))
 print(construct_block_header(block_arr[1:3]))
 block_header = construct_block_header(block_arr[1:3])
 block_arr = [block_header] + block_arr
-print(block_arr[0])
-print(block_arr[1])
-print(block_arr[2])
-print(block_arr[3])
+# print(block_arr[0])
+# print(block_arr[1])
+# print(block_arr[2])
+# print(block_arr[3])
 print(len(block_arr))
     
 try:
