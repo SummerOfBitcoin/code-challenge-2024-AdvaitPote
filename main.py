@@ -47,7 +47,7 @@ def construct_block_header(txids):
     for nonce in nonces:
         nonce = ''.join(nonce)  
         block_header = header_pre_nonce + nonce
-        if sha256(sha256(bytes.fromhex(block_header)).digest()).digest() < bytes.fromhex(target):
+        if sha256(sha256(bytes.fromhex(block_header)).digest()).digest()[::-1] < bytes.fromhex(target):
             break
     # print(sha256(sha256(bytes.fromhex(block_header)).digest()).digest().hex())
     return block_header
