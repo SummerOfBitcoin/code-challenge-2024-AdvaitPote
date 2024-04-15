@@ -247,18 +247,18 @@ for txname in transaction_fees:
             print(f"Error decoding JSON in file {file}: {e}")
 
 
-print(merkle_root(block_arr[1:]))         
-print(block_arr[0])
-print(block_arr[1])
-print(block_arr[2])
-print(block_arr[3])
-print(len(block_arr))
-print(len(transaction_fees))
+# print(merkle_root(block_arr[1:3]))         
+# print(block_arr[0])
+# print(block_arr[1])
+# print(block_arr[2])
+# print(block_arr[3])
+# print(len(block_arr))
+# print(len(transaction_fees))
 
 print(block_arr[1:3])
 print(merkle_root(block_arr[1:3]))
-print(construct_block_header(block_arr[1:]))
-block_header = construct_block_header(block_arr[1:])
+print(construct_block_header(block_arr[1:3]))
+block_header = construct_block_header(block_arr[1:2])
 block_arr = [block_header] + block_arr
 print(block_arr[0])
 print(block_arr[1])
@@ -270,7 +270,7 @@ try:
     # Open the file in write mode
     with open("output.txt", 'w') as file:
         # Write each element of the list to the file
-        for element in block_arr:
+        for element in block_arr[:3]:
             file.write(element + '\n') 
 except Exception as e:
     print(f"Error writing to file: {e}")
