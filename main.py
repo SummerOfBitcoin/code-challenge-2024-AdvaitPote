@@ -40,7 +40,7 @@ def construct_block_header(txids):
     merkle = bytes.fromhex(merkle_root(txids))[::-1].hex()
     unix_time = bytes.fromhex(hex(int(time.time()))[2:])[::-1].hex()
     target_bits = bytes.fromhex("1f00ffff")[::-1].hex()
-    header_pre_nonce = "0"*72 + merkle + unix_time + target_bits
+    header_pre_nonce = "01000000" + "0"*64 + merkle + unix_time + target_bits
     hex_chars = '0123456789ABCDEF'
     nonces = itertools.product(hex_chars, repeat=8)
     # print(header_pre_nonce)
