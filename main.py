@@ -39,7 +39,7 @@ def merkle_root(txids):
 
 def construct_block_header(txids):
     target = "0000ffff00000000000000000000000000000000000000000000000000000000"
-    merkle = bytes.fromhex(merkle_root(txids))[::-1].hex()
+    merkle = bytes.fromhex(merkle_root(txids)).hex()
     unix_time = bytes.fromhex(hex(int(time.time()))[2:])[::-1].hex()
     target_bits = bytes.fromhex("1f00ffff")[::-1].hex()
     header_pre_nonce = "00c0302f" + "0"*64 + merkle + unix_time + target_bits
@@ -269,15 +269,13 @@ block_arr = [block_header] + block_arr
 print(len(block_arr))
     
 try:
-    # Open the file in write mode
     with open("output.txt", 'w') as file:
-        # Write each element of the list to the file
-        # for element in block_arr[:4]:
-            # file.write(element + '\n') 
-        file.write("00c0302f0000000000000000000000000000000000000000000000000000000000000000e8d8a78950ba8692b8df10d800debfa87b5b2f47f0f51e9a305b44e5c9194265377f1d66ffff001f00000AA6" + "\n")
-        file.write("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503d3ce0c184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff01d1af4327000000004341047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac00000000\n")
-        file.write("dfa0cb67df38210ff80fbc799dd42bf16f67d4168d44a08f02dd5e1debd29e30\n")
-        file.write("541d3695df7f95f1dd29502085ac3be3f44240ea76c6da0a1dba54effaf9248a")
+        for element in block_arr[:4]:
+            file.write(element + '\n') 
+        # file.write("00c0302f0000000000000000000000000000000000000000000000000000000000000000654219c9e5445b309a1ef5f0472f5b7ba8bfde00d810dfb89286ba5089a7d8e8377f1d66ffff001f00000AA6" + "\n")
+        # file.write("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503d3ce0c184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff01d1af4327000000004341047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac00000000")
+        # file.write("dfa0cb67df38210ff80fbc799dd42bf16f67d4168d44a08f02dd5e1debd29e30")
+        # file.write("541d3695df7f95f1dd29502085ac3be3f44240ea76c6da0a1dba54effaf9248a")
 
 except Exception as e:
     print(f"Error writing to file: {e}")
