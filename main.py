@@ -23,7 +23,7 @@ def merkle_root(txids):
         return ""
     if len(txids) == 1:
         return txids[0]
-    txids = [bytes.fromhex(txid)[::-1].hex() for txid in txids]
+    # txids = [bytes.fromhex(txid)[::-1].hex() for txid in txids]
     while True:
         new_txids = []
         if len(txids) == 1:
