@@ -195,12 +195,16 @@ print(len(valid_transactions_new))
 
 fees = 0
 transaction_fees = {}
+wtxids = []
 # for i in range(len(valid_transactions)):
+wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
 for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
+            wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
+            wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
             input_sum = 0
             output_sum = 0
             for input in data['vin']:
@@ -224,11 +228,22 @@ with open("coinbase.json", 'r') as file:
         block_height = get_current_block_height()
         coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
         coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
-        # coinbase_data['vout'][0]['value'] = 625000000 + fees
+        coinbase_data['vout'][0]['value'] = 625000000 + fees
+        wtxid_hash_reserve = bytes.fromhex(merkle_root(wtxids))[::-1].hex() + coinbase_data['vin'][0]['witness'][0]
+        coinbase_data['vout'][1]['scriptpubkey'] = "6a24aa21a9ed" + sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex()
         print(coinbase_data)
         print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
+
+# sample = [
+#     "0000000000000000000000000000000000000000000000000000000000000000",
+#     "6440ffe0a58cbec4692d075bc74877cdf7554a25eee5a02fa6ff3bb55dbb0802",
+#     "9e4fa066c9587e65845065a6b5ad02cbec6cfdad8b0158953dcee086ff420ffd",
+#     "57661a181f4762861fc2bc5c6001c27b54e26992e845b4742a6f0f867609b2c2"
+# ]
+
+# print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in sample]))[::-1])
 
 block_weight = 80 # size of block header at start
 
@@ -258,16 +273,16 @@ for txname in transaction_fees:
 # print(len(block_arr))
 # print(len(transaction_fees))
 
-print(block_arr[1:])
-print(merkle_root(block_arr[1:]))
-print(construct_block_header(block_arr[1:]))
+# print(block_arr[1:])
+# print(merkle_root(block_arr[1:]))
+# print(construct_block_header(block_arr[1:]))
 block_header = construct_block_header(block_arr[1:])
 block_arr = [block_header] + block_arr
 # print(block_arr[0])
 # print(block_arr[1])
 # print(block_arr[2])
 # print(block_arr[3])
-print(len(block_arr))
+# print(len(block_arr))
     
 try:
     # Open the file in write mode

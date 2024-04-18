@@ -7,15 +7,23 @@
       "vout": 4294967295, 
       "scriptsig": "0317ce0c184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100", 
       "scriptsig_asm": "", 
+      "witness": [
+        "0000000000000000000000000000000000000000000000000000000000000000"
+      ],
       "is_coinbase": true, 
       "sequence": 4294967295
     }
   ], 
   "vout": [
     {
+      "scriptpubkeysize": "19", 
+      "scriptpubkey": "76a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac", 
+      "value": 625000000
+    },
+    {
       "scriptpubkeysize": "43", 
       "scriptpubkey": "41047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac", 
-      "value": 625000000
+      "value": 0
     }
   ]
 }
