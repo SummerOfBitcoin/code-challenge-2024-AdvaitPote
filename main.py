@@ -203,7 +203,7 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 1000:
+            if block_weight > 120:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
