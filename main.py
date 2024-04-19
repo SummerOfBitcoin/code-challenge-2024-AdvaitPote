@@ -247,11 +247,11 @@ with open("coinbase.json", 'r') as file:
 
 block_weight = 80 # size of block header at start
 
-block_arr.append(serialize(coinbase_data)[1])
+block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
 
 block_weight += int(len(serialize(coinbase_data)[1])/2)
-block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())/2)
+block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[0])).digest()).digest().hex())/2)
 for txname in transaction_fees:
     # if block_weight > 200000: 
     #     break
