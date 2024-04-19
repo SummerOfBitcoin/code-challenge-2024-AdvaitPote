@@ -196,13 +196,18 @@ print(len(valid_transactions_new))
 fees = 0
 transaction_fees = {}
 wtxids = []
+block_weight = 80 # size of block header at start
 # for i in range(len(valid_transactions)):
 wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
 for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
+            if block_weight > 2000:
+                break
             data = json.load(file)
+            txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
+            block_weight += int(len(txid)/2)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
             wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
             input_sum = 0
@@ -245,16 +250,14 @@ with open("coinbase.json", 'r') as file:
 
 # print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in sample]))[::-1])
 
-block_weight = 80 # size of block header at start
-
 block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
 
 block_weight += int(len(serialize(coinbase_data)[1])/2)
 block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[0])).digest()).digest().hex())/2)
 for txname in transaction_fees:
-    if block_weight > 2000: 
-        break
+    # if block_weight > 2000: 
+        # break
     with open('mempool/' + txname, 'r') as file:
         try:
             data = json.load(file)
