@@ -253,7 +253,7 @@ block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).diges
 block_weight += int(len(serialize(coinbase_data)[1])/2)
 block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[0])).digest()).digest().hex())/2)
 for txname in transaction_fees:
-    if block_weight > 20000: 
+    if block_weight > 2000: 
         break
     with open('mempool/' + txname, 'r') as file:
         try:
