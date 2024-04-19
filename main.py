@@ -197,7 +197,7 @@ fees = 0
 transaction_fees = {}
 wtxids = []
 # for i in range(len(valid_transactions)):
-wtxids.append("0000000000000000000000000000000000000000000000000000000000000001")
+wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
 for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
