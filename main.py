@@ -203,13 +203,16 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 2000:
+            if block_weight > 200:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
             block_weight += int(len(txid)/2)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
+            # print(file_name)
+            # print(wtxid)
             wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
+            # print(wtxids)
             input_sum = 0
             output_sum = 0
             for input in data['vin']:
@@ -220,8 +223,11 @@ for file_name in valid_transactions_new:
             fees += (input_sum - output_sum)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
+# wtxids = wtxids[:-1]
+# print(wtxids)
 
 transaction_fees = dict(sorted(transaction_fees.items(), key=lambda item: item[1], reverse=True))
+print(transaction_fees)
 # print(transaction_fees)
 
 block_arr = []
@@ -234,9 +240,16 @@ with open("coinbase.json", 'r') as file:
         coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
         coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
         coinbase_data['vout'][0]['value'] = 625000000 + fees
-        wtxid_hash_reserve = bytes.fromhex(merkle_root(wtxids))[::-1].hex() + coinbase_data['vin'][0]['witness'][0]
+        # print(wtxids)
+        wtxid_hash_reserve = bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex() + coinbase_data['vin'][0]['witness'][0]
+        # print(wtxid_hash_reserve)
+        # print(wtxids)
+        # print(merkle_root([w[::-1] for w in wtxids]))
+        # print(merkle_root(wtxids))
+        print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex())
+        print(sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex())
         coinbase_data['vout'][1]['scriptpubkey'] = "6a24aa21a9ed" + sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex()
-        print(coinbase_data)
+        # print(coinbase_data)
         print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
@@ -248,7 +261,9 @@ with open("coinbase.json", 'r') as file:
 #     "57661a181f4762861fc2bc5c6001c27b54e26992e845b4742a6f0f867609b2c2"
 # ]
 
-# print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in sample]))[::-1])
+# print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in sample]))[::-1].hex())
+
+block_weight = 80
 
 block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
