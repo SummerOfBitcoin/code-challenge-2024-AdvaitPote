@@ -196,6 +196,7 @@ print(len(valid_transactions_new))
 fees = 0
 transaction_fees = {}
 wtxids = []
+wtxid_dict = {}
 block_weight = 80 # size of block header at start
 # for i in range(len(valid_transactions)):
 wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
@@ -209,9 +210,10 @@ for file_name in valid_transactions_new:
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
             block_weight += int(len(txid)/2)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
+            wtxid_dict[txid] = wtxid
             # print(file_name)
             # print(wtxid)
-            wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
+            # wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
             # print(wtxids)
             input_sum = 0
             output_sum = 0
@@ -227,6 +229,15 @@ for file_name in valid_transactions_new:
 # print(wtxids)
 
 transaction_fees = dict(sorted(transaction_fees.items(), key=lambda item: item[1], reverse=True))
+for file_name in transaction_fees:
+    # file_name = valid_transactions[i]
+    with open('mempool/' + file_name, 'r') as file:
+        try:
+            data = json.load(file)
+            txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
+            wtxids.append(bytes.fromhex(wtxid_dict[txid])[::-1].hex())
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
 print(transaction_fees)
 # print(transaction_fees)
 
