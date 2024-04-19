@@ -253,8 +253,8 @@ block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).diges
 block_weight += int(len(serialize(coinbase_data)[1])/2)
 block_weight += int(len(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[0])).digest()).digest().hex())/2)
 for txname in transaction_fees:
-    # if block_weight > 200000: 
-    #     break
+    if block_weight > 20000: 
+        break
     with open('mempool/' + txname, 'r') as file:
         try:
             data = json.load(file)
@@ -284,19 +284,23 @@ block_arr = [block_header] + block_arr
 # print(block_arr[3])
 # print(len(block_arr))
     
+block_wt = 0
 try:
     # Open the file in write mode
     with open("output.txt", 'w') as file:
         # Write each element of the list to the file
         for element in block_arr[:2]:
             file.write(element + '\n')
+            block_wt += int(len(element)/2)
         for element in block_arr[2:]:
             file.write(bytes.fromhex(element)[::-1].hex() + '\n') 
+            block_wt += int(len(element)/2)
         # file.write(bytes.fromhex("00c3d3c44a91d0118ce7d8c4c0ffbac2ef2eaf0c4ce7b82a3432568a6cbc4533")[::-1].hex())
         # file.write("00c0302f0000000000000000000000000000000000000000000000000000000000000000654219c9e5445b309a1ef5f0472f5b7ba8bfde00d810dfb89286ba5089a7d8e8377f1d66ffff001f00000AA6" + "\n")
         # file.write("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503d3ce0c184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff01d1af4327000000004341047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac00000000")
         # file.write("dfa0cb67df38210ff80fbc799dd42bf16f67d4168d44a08f02dd5e1debd29e30")
         # file.write("541d3695df7f95f1dd29502085ac3be3f44240ea76c6da0a1dba54effaf9248a")
+    print(block_wt)
 
 except Exception as e:
     print(f"Error writing to file: {e}")
