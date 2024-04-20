@@ -85,6 +85,18 @@ def serialize(data):
     serialize_review += data['locktime'].to_bytes(4, byteorder='little').hex()        
     return (transaction, serialize_review)
 
+def tx_weight(data):
+    weight = len(serialize(data)[0])*4 - 3*(4) # version and marker to be subtracted
+    witness_script_len = 0
+    for input in data['vin']:
+        if 'witness'in input:
+            witness_script_len += len(compact_size(len(input['witness'])).hex())
+            for witness in input['witness']:
+                witness_script_len += len(compact_size(int(len(witness)/2)).hex())
+                witness_script_len += len(witness)
+    weight -= 3*witness_script_len
+    return int(weight/2)
+
 def preimage(data, i, is_p2wsh=False):
     input = data['vin'][i]
     transaction = serialize(data)[0]
