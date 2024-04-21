@@ -204,7 +204,7 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 39900:
+            if block_weight > 399900:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
@@ -266,7 +266,7 @@ with open("coinbase.json", 'r') as file:
         coinbase_data['vout'][1]['scriptpubkey'] = "6a24aa21a9ed" + sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex()
         block_weight += tx_weight(coinbase_data)
         print(coinbase_data)
-        # print(serialize(coinbase_data))
+        print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
 
