@@ -209,7 +209,7 @@ for file_name in valid_transactions_new:
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
             block_weight += int(tx_weight(data))
-            print(block_weight)
+            # print(block_weight)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
             wtxid_dict[txid] = wtxid
             # print(file_name)
@@ -226,7 +226,7 @@ for file_name in valid_transactions_new:
             fees += (input_sum - output_sum)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
-print(wtxid_dict)
+# print(wtxid_dict)
 # wtxids = wtxids[:-1]
 print(block_weight)
 # print(wtxids)
@@ -238,7 +238,7 @@ for file_name in transaction_fees:
         try:
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            print(txid)
+            # print(txid)
             wtxids.append(bytes.fromhex(wtxid_dict[txid])[::-1].hex())
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
@@ -258,7 +258,7 @@ with open("coinbase.json", 'r') as file:
         # print(wtxids)
         wtxid_hash_reserve = bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex() + coinbase_data['vin'][0]['witness'][0]
         print(wtxid_hash_reserve)
-        print(wtxids)
+        # print(wtxids)
         # print(merkle_root([w[::-1] for w in wtxids]))
         # print(merkle_root(wtxids))
         # print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex())
