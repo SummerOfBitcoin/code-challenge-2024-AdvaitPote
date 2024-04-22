@@ -80,6 +80,8 @@ def serialize(data):
             for witness in input['witness']:
                 wit_len = compact_size(int(len(witness)/2)).hex()
                 transaction += "".join([wit_len, witness])
+        else:
+            transaction += compact_size(0).hex()
         index += 1
     transaction += data['locktime'].to_bytes(4, byteorder='little').hex()        
     serialize_review += data['locktime'].to_bytes(4, byteorder='little').hex()        

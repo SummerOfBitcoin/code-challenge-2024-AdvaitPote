@@ -180,7 +180,7 @@ valid_transactions_new = set([])
 #         f.write("\n")
 
 try:
-    with open("txs.txt", 'r') as file:
+    with open("filename.txt", 'r') as file:
         # Read each line and append to the elements list
         for line in file:
             valid_transactions_new.add(str(line.strip()))  # Remove whitespace characters like '\n'
@@ -204,7 +204,7 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 399900:
+            if block_weight > 39990000:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
