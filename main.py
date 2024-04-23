@@ -234,17 +234,18 @@ transaction_fees = {}
 wtxids = []
 wtxid_dict = {}
 block_weight = 320 # size of block header at start
+initial_block_weight = 320
 # for i in range(len(valid_transactions)):
 wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
 for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 3990000:
+            block_weight += int(tx_weight(data))
+            if block_weight > 4000000:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            block_weight += int(tx_weight(data))
             # print(block_weight)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
             wtxid_dict[txid] = wtxid
