@@ -242,7 +242,7 @@ for file_name in valid_transactions_new:
     with open('mempool/' + file_name, 'r') as file:
         try:
             block_weight += int(tx_weight(data))
-            if block_weight > 4000000:
+            if block_weight > 3900000:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
