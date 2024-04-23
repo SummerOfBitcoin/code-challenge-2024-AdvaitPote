@@ -115,14 +115,14 @@ for i in range(len(files)):
                 if 'witness' in input:
                     wit = True
                     break
-            # if not wit:
-            #     for j in range(len(data['vin'])):
-            #         if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":       
-            #             transactions.add(file_name)
-            #             is_valid = verify_p2pkh(data, j)                 
-            #             if not is_valid:
-            #                 invalid_transactions.add(file_name)
-            #                 break
+            if not wit:
+                for j in range(len(data['vin'])):
+                    if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":       
+                        transactions.add(file_name)
+                        is_valid = verify_p2pkh(data, j)                 
+                        if not is_valid:
+                            invalid_transactions.add(file_name)
+                            break
 
             # for j in range(len(data['vin'])):
             #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wpkh":       
@@ -170,14 +170,14 @@ valid_transactions_new = set([])
 # except FileNotFoundError:
 #     print(f"Error: File '{filename}' not found.")
 
-# for tx in transactions:
-#     if tx not in invalid_transactions:
-#         valid_transactions.add(tx)
+for tx in transactions:
+    if tx not in invalid_transactions:
+        valid_transactions.add(tx)
 
-# with open("filename.txt", 'w') as f:
-#     for tx in sorted(valid_transactions):
-#         f.write(tx)
-#         f.write("\n")
+with open("filename.txt", 'w') as f:
+    for tx in sorted(valid_transactions):
+        f.write(tx)
+        f.write("\n")
 
 try:
     with open("filename.txt", 'r') as file:
