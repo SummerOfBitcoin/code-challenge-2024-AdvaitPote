@@ -76,8 +76,8 @@ def verify_p2pkh(data, i):
     # print(message.hex())
     # print(" ")
     vk = VerifyingKey.from_string(pub_key, curve=ecdsa.SECP256k1)
-    if hash160(pub_key).hex() != pkhash:
-        return False
+    # if hash160(pub_key).hex() != pkhash:
+    #     return False
     try:
         result = vk.verify(bytes.fromhex(sig), message, hashfunc=sha256)
     except BadSignatureError:
