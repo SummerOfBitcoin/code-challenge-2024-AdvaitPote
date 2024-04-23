@@ -163,6 +163,22 @@ for i in range(len(files)):
                         invalid_transactions.add(file_name)
                         break
 
+            # for j in range(len(data['vin'])):
+            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
+            #         transactions.add(file_name)
+            #         is_valid = verify_p2sh(data, j)                 
+            #         if not is_valid:
+            #             invalid_transactions.add(file_name)
+            #             break
+
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
+
+for i in range(len(files)): 
+    file_name = files[i]
+    with open('mempool/' + file_name, 'r') as file:
+        try:
+            data = json.load(file)
             for j in range(len(data['vin'])):
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
                     transactions.add(file_name)
@@ -170,7 +186,6 @@ for i in range(len(files)):
                     if not is_valid:
                         invalid_transactions.add(file_name)
                         break
-
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
