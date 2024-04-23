@@ -204,11 +204,12 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 3990000:
+            if block_weight > 3999000:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
             block_weight += int(tx_weight(data))
+            # print(block_weight)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
             wtxid_dict[txid] = wtxid
             # print(file_name)
@@ -266,7 +267,6 @@ with open("coinbase.json", 'r') as file:
 block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
 
-money = 0
 for txname in transaction_fees:
     # if block_weight > 2000: 
         # break
@@ -274,14 +274,12 @@ for txname in transaction_fees:
         try:
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            money += transaction_fees[txname]
             block_arr.append(txid)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
 block_header = construct_block_header(block_arr[1:])
 block_arr = [block_header] + block_arr
-print(money)
     
 try:
     # Open the file in write mode
