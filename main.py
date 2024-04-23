@@ -204,7 +204,7 @@ for file_name in valid_transactions_new:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
-            if block_weight > 1999000:
+            if block_weight > 3999000:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
@@ -255,29 +255,14 @@ with open("coinbase.json", 'r') as file:
         coinbase_data['vin'][0]['scriptsig'] = "03" + block_height.to_bytes(3, 'little').hex()
         coinbase_data['vin'][0]['scriptsig'] += "184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100" # dummy data
         coinbase_data['vout'][0]['value'] = 625000000 + fees
-        # print(wtxids)
         wtxid_hash_reserve = bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex() + coinbase_data['vin'][0]['witness'][0]
         print(wtxid_hash_reserve)
-        # print(wtxids)
-        # print(merkle_root([w[::-1] for w in wtxids]))
-        # print(merkle_root(wtxids))
-        # print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in wtxids]))[::-1].hex())
-        # print(sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex())
         coinbase_data['vout'][1]['scriptpubkey'] = "6a24aa21a9ed" + sha256(sha256(bytes.fromhex(wtxid_hash_reserve)).digest()).digest().hex()
         block_weight += tx_weight(coinbase_data)
         print(coinbase_data)
         print(serialize(coinbase_data))
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
-
-# sample = [
-#     "0000000000000000000000000000000000000000000000000000000000000000",
-#     "6440ffe0a58cbec4692d075bc74877cdf7554a25eee5a02fa6ff3bb55dbb0802",
-#     "9e4fa066c9587e65845065a6b5ad02cbec6cfdad8b0158953dcee086ff420ffd",
-#     "57661a181f4762861fc2bc5c6001c27b54e26992e845b4742a6f0f867609b2c2"
-# ]
-
-# print(bytes.fromhex(merkle_root([bytes.fromhex(tx)[::-1].hex() for tx in sample]))[::-1].hex())
 
 block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
@@ -293,25 +278,8 @@ for txname in transaction_fees:
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
-
-# print(merkle_root(block_arr[1:3]))         
-# print(block_arr[0])
-# print(block_arr[1])
-# print(block_arr[2])
-# print(block_arr[3])
-# print(len(block_arr))
-# print(len(transaction_fees))
-
-# print(block_arr[1:])
-# print(merkle_root(block_arr[1:]))
-# print(construct_block_header(block_arr[1:]))
 block_header = construct_block_header(block_arr[1:])
 block_arr = [block_header] + block_arr
-# print(block_arr[0])
-# print(block_arr[1])
-# print(block_arr[2])
-# print(block_arr[3])
-# print(len(block_arr))
     
 try:
     # Open the file in write mode
@@ -321,11 +289,6 @@ try:
             file.write(element + '\n')
         for element in block_arr[2:]:
             file.write(bytes.fromhex(element)[::-1].hex() + '\n') 
-        # file.write(bytes.fromhex("00c3d3c44a91d0118ce7d8c4c0ffbac2ef2eaf0c4ce7b82a3432568a6cbc4533")[::-1].hex())
-        # file.write("00c0302f0000000000000000000000000000000000000000000000000000000000000000654219c9e5445b309a1ef5f0472f5b7ba8bfde00d810dfb89286ba5089a7d8e8377f1d66ffff001f00000AA6" + "\n")
-        # file.write("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2503d3ce0c184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff01d1af4327000000004341047eda6bd04fb27cab6e7c28c99b94977f073e912f25d1ff7165d9c95cd9bbe6da7e7ad7f2acb09e0ced91705f7616af53bee51a238b7dc527f2be0aa60469d140ac00000000")
-        # file.write("dfa0cb67df38210ff80fbc799dd42bf16f67d4168d44a08f02dd5e1debd29e30")
-        # file.write("541d3695df7f95f1dd29502085ac3be3f44240ea76c6da0a1dba54effaf9248a")
 
 except Exception as e:
     print(f"Error writing to file: {e}")
