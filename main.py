@@ -208,7 +208,7 @@ valid_transactions_new = set([])
 #     print(f"Error: File '{filename}' not found.")
 
 for tx in transactions:
-    if tx not in invalid_transactions:
+    if tx not in invalid_transactions and len(valid_transactions) < 1:
         valid_transactions.add(tx)
 
 with open("filename.txt", 'w') as f:
