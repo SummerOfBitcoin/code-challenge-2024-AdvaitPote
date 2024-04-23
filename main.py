@@ -76,6 +76,7 @@ for i in range(len(files)):
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
+            transactions.add(file_name)
             transaction, serialize_review = serialize(data)
 
             if len(transaction) < 200 or len(transaction) > 2000000: # transactions should be minimum 100 bytes and max 1 MB
@@ -118,7 +119,6 @@ for i in range(len(files)):
             if not wit:
                 for j in range(len(data['vin'])):
                     if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":       
-                        transactions.add(file_name)
                         is_valid = verify_p2pkh(data, j)                 
                         if not is_valid:
                             invalid_transactions.add(file_name)
@@ -157,7 +157,6 @@ for i in range(len(files)):
                     
             for j in range(len(data['vin'])):
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wsh":       
-                    transactions.add(file_name)
                     is_valid = verify_p2wsh(data, j)                 
                     if not is_valid:
                         invalid_transactions.add(file_name)
@@ -174,20 +173,19 @@ for i in range(len(files)):
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
-for i in range(len(files)): 
-    file_name = files[i]
-    with open('mempool/' + file_name, 'r') as file:
-        try:
-            data = json.load(file)
-            for j in range(len(data['vin'])):
-                if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
-                    transactions.add(file_name)
-                    is_valid = verify_p2sh(data, j)                 
-                    if not is_valid:
-                        invalid_transactions.add(file_name)
-                        break
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON in file {file}: {e}")
+# for i in range(len(files)): 
+#     file_name = files[i]
+#     with open('mempool/' + file_name, 'r') as file:
+#         try:
+#             data = json.load(file)
+#             for j in range(len(data['vin'])):
+#                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
+#                     is_valid = verify_p2sh(data, j)                 
+#                     if not is_valid:
+#                         invalid_transactions.add(file_name)
+#                         break
+#         except json.JSONDecodeError as e:
+#             print(f"Error decoding JSON in file {file}: {e}")
 
 # with open("coinbase.json", r) as file:
 #     coinbase = serialize(json.load(file))[0]
