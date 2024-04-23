@@ -178,6 +178,10 @@ for i in range(len(files)):
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
+            for j in range(len(data['vin'])-1):
+                if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
+                    invalid_transactions.add(file_name)
+                    break
             for j in range(len(data['vin'])):
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
                     transactions.add(file_name)
@@ -195,6 +199,8 @@ for i in range(len(files)):
 
 filename = "output.txt"
 
+# for element in transactions:
+    # print(element)
 # print(valid_transactions)
 
 valid_transactions_new = set([])
@@ -208,7 +214,7 @@ valid_transactions_new = set([])
 #     print(f"Error: File '{filename}' not found.")
 
 for tx in transactions:
-    if tx not in invalid_transactions and len(valid_transactions) < 10:
+    if tx not in invalid_transactions:
         valid_transactions.add(tx)
 
 with open("filename.txt", 'w') as f:
