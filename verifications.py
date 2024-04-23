@@ -92,14 +92,14 @@ def verify_p2sh(data, i):
     redeem = input['inner_redeemscript_asm']
     data_new = {}
 
-    if hash160(bytes.fromhex(input['scriptsig_asm'].split(" ")[-1])).hex() != input['prevout']['scriptpubkey_asm'].split(" ")[-2]:
-        return False
+    # if hash160(bytes.fromhex(input['scriptsig_asm'].split(" ")[-1])).hex() != input['prevout']['scriptpubkey_asm'].split(" ")[-2]:
+    #     return False
     
     # if input['inner_redeemscript_asm'].split(" ")[-1] == "OP_CHECKMULTISIG": 
     #     data_new = data
     #     verify_multisig(data, i, is_p2wsh=False)
 
-    elif input['inner_redeemscript_asm'].split(" ")[1] == "OP_PUSHBYTES_32":
+    if input['inner_redeemscript_asm'].split(" ")[1] == "OP_PUSHBYTES_32":
         data_new = data
         data_new['vin'][i]['prevout']['scriptpubkey_asm'] = redeem
         return verify_p2wsh(data_new, i)
@@ -121,8 +121,8 @@ def verify_p2wpkh(data, i):
     message = sha256(bytes.fromhex(modified_transaction)).digest()
     # print(modified_transaction)
     vk = VerifyingKey.from_string(pub_key, curve=ecdsa.SECP256k1)
-    if hash160(pub_key).hex() != pkhash:
-        return False
+    # if hash160(pub_key).hex() != pkhash:
+    #     return False
     try:
         result = vk.verify(bytes.fromhex(sig), message, hashfunc=sha256)
     except BadSignatureError:
