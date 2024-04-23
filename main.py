@@ -23,9 +23,6 @@ def merkle_root(txids):
         return ""
     if len(txids) == 1:
         return bytes.fromhex(txids[0])[::-1].hex()
-        return txids[0]
-        # return bytes.fromhex(txids[0])[::-1].hex()
-    # txids = [bytes.fromhex(txid)[::-1].hex() for txid in txids]
     while True:
         new_txids = []
         if len(txids) == 1:
@@ -36,7 +33,6 @@ def merkle_root(txids):
             new_txids.append(sha256(sha256(bytes.fromhex(txids[i]+txids[i+1])).digest()).digest().hex())
         txids = new_txids
     return bytes.fromhex(txids[0])[::-1].hex()
-    # return txids[0]
 
 def construct_block_header(txids):
     target = "0000ffff00000000000000000000000000000000000000000000000000000000"
@@ -46,13 +42,11 @@ def construct_block_header(txids):
     header_pre_nonce = "00c0302f" + "0"*64 + merkle + unix_time + target_bits
     hex_chars = '0123456789ABCDEF'
     nonces = itertools.product(hex_chars, repeat=8)
-    # print(header_pre_nonce)
     for nonce in nonces:
         nonce = ''.join(nonce)  
         block_header = header_pre_nonce + nonce
         if sha256(sha256(bytes.fromhex(block_header)).digest()).digest()[::-1] < bytes.fromhex(target):
             break
-    # print(sha256(sha256(bytes.fromhex(block_header)).digest()).digest().hex())
     return block_header
 
 def get_current_block_height():
@@ -193,10 +187,24 @@ for i in range(len(files)):
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
-# with open("coinbase.json", r) as file:
-#     coinbase = serialize(json.load(file))[0]
-
-# bh = "04e00020e3e954a25562ccde401f8b2ade53f1e27cbf4db242bd0b000000000000000000c937f59a3635f492e8218c75b2492c6e1d59d1483a09341357e4fbfd4e0f923039c3fe6024961417c511768c"
+for i in range(len(files)): 
+    file_name = files[i]
+    with open('mempool/' + file_name, 'r') as file:
+        try:
+            data = json.load(file)
+            for j in range(len(data['vin'])-1):
+                if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
+                    invalid_transactions.add(file_name)
+                    break
+            for j in range(len(data['vin'])):
+                if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2wsh":       
+                    transactions.add(file_name)
+                    is_valid = verify_p2wsh(data, j)                 
+                    if not is_valid:
+                        invalid_transactions.add(file_name)
+                        break
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
 
 filename = "output.txt"
 
