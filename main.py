@@ -91,6 +91,11 @@ for i in range(len(files)):
                 invalid_transactions.add(file_name)
                 continue
 
+            if data['locktime'] != 0 and data['locktime'] < 500000000: # check if the locktime of the transaction is before the current block time
+                if data['locktime'] > get_current_block_height():
+                    invalid_transactions.add(file_name)
+                    continue
+
             for input in data['vin']: # check double spending
                 old_size = len(ds_inputs)
                 ds_inputs.add((input['txid'], input['vout']))
@@ -195,13 +200,9 @@ for i in range(len(files)):
 
 filename = "output.txt"
 
-valid_transactions_new = set([])
-
 for tx in transactions:
     if tx not in invalid_transactions:
         valid_transactions.add(tx)
-
-print(len(valid_transactions_new))
 
 fees = 0
 transaction_fees = {}
@@ -209,9 +210,8 @@ wtxids = []
 wtxid_dict = {}
 block_weight = 320 # size of block header at start
 initial_block_weight = 320
-wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
+wtxids.append("0"*64)
 for file_name in valid_transactions:
-    # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
             block_weight += int(tx_weight(data))
