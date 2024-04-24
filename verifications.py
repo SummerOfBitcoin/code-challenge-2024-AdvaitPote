@@ -18,6 +18,21 @@ from hashlib import sha256
 from serialisations import serialize, hash160, decode_sig, preimage, bech_32
 
 def verify_multisig(data, i, is_p2wsh=True):
+    """
+    Verifies a Multisig Script
+
+     Parameters
+    ==========
+
+    data : Dictionary
+        Transaction data 
+
+    i : Integer
+        index of the input to be verified
+
+    is_p2wsh : Boolean
+        If the transaction input is P2WSH
+    """
     input = data['vin'][i]
     inner_script = input['inner_witnessscript_asm'].split(" ")
     witness = input['witness']
@@ -51,6 +66,18 @@ def verify_multisig(data, i, is_p2wsh=True):
     return matched_sigs == len(signatures)
 
 def verify_p2pkh(data, i):
+    """
+    Verify if given P2PKH transaction input is valid 
+
+    Parameters
+    ==========
+
+    data : Dictionary
+        Transaction data 
+
+    i : Integer
+        index of the input to be verified
+    """
     input = data['vin'][i]
     modified_transaction = serialize(data)[0]
     # print(modified_transaction)
@@ -88,6 +115,18 @@ def verify_p2pkh(data, i):
     return True
 
 def verify_p2sh(data, i):
+    """
+    Verify if given P2SH transaction input is valid 
+
+    Parameters
+    ==========
+
+    data : Dictionary
+        Transaction data 
+
+    i : Integer
+        index of the input to be verified
+    """
     input = data['vin'][i]
     redeem = input['inner_redeemscript_asm']
     data_new = {}
@@ -112,6 +151,18 @@ def verify_p2sh(data, i):
     return True
 
 def verify_p2wpkh(data, i):
+    """
+    Verify if given P2WPKH transaction input is valid 
+
+    Parameters
+    ==========
+
+    data : Dictionary
+        Transaction data 
+
+    i : Integer
+        index of the input to be verified
+    """
     input = data['vin'][i]
     modified_transaction = serialize(data)[0]
     pub_key = bytes.fromhex(input['witness'][1])
@@ -132,6 +183,18 @@ def verify_p2wpkh(data, i):
     return True
 
 def verify_p2wsh(data, i):
+    """
+    Verify if given P2WSH transaction input is valid 
+
+    Parameters
+    ==========
+
+    data : Dictionary
+        Transaction data 
+
+    i : Integer
+        index of the input to be verified
+    """
     input = data['vin'][i]
     witnesses = input['witness']
 

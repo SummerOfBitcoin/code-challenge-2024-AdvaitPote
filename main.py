@@ -19,6 +19,15 @@ from verifications import verify_p2pkh, verify_p2wpkh, verify_p2wsh, verify_p2sh
 import requests, itertools
 
 def merkle_root(txids):
+    """
+    Returns the merkle root of a given list of Transaction IDs in reverse byte order.
+
+    Parameters
+    ==========
+
+    txids : List
+            Transaction IDs given in reverse byte order
+    """
     if len(txids) == 0:
         return ""
     if len(txids) == 1:
@@ -35,6 +44,15 @@ def merkle_root(txids):
     return bytes.fromhex(txids[0])[::-1].hex()
 
 def construct_block_header(txids):
+    """
+    Returns the Block Header from a list of a Transaction IDs.
+
+    Parameters
+    ==========
+
+    txids : List
+            Transaction IDs given in natural byte order
+    """
     target = "0000ffff00000000000000000000000000000000000000000000000000000000"
     merkle = bytes.fromhex(merkle_root(txids))[::-1].hex()
     unix_time = bytes.fromhex(hex(int(time.time()))[2:])[::-1].hex()
@@ -50,6 +68,9 @@ def construct_block_header(txids):
     return block_header
 
 def get_current_block_height():
+    """
+    Returns Current Bitcoin Block Height
+    """
     url = 'https://blockchain.info/latestblock'
     response = requests.get(url)
     if response.status_code == 200:
@@ -100,23 +121,15 @@ for i in range(len(files)):
                 old_size = len(ds_inputs)
                 ds_inputs.add((input['txid'], input['vout']))
                 if len(ds_inputs) == old_size:
-                    print(file_name)
-                    sys.exit()
-                    # break
-
-            transaction_id = sha256(sha256(bytearray.fromhex(serialize_review)).digest()).digest().hex()
-            hashed_id = sha256(bytearray.fromhex(transaction_id)[::-1]).digest().hex()
-            if hashed_id != file_name[:-5]:
-                print("No")
-                print(file_name)
-            wit = False
+                    invalid_transactions.add(file_name)
+                    continue                    
 
             for input in data['vin']:
                 if 'witness' in input:
                     wit = True
                     break
             if not wit:
-                for j in range(len(data['vin'])):
+                for j in range(len(data['vin'])): # verifying P2PKH transactions
                     if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2pkh":       
                         transactions.add(file_name)
                         is_valid = verify_p2pkh(data, j)                 
@@ -133,7 +146,7 @@ for i in range(len(files)):
         try:
             data = json.load(file)
 
-            for j in range(len(data['vin'])):
+            for j in range(len(data['vin'])): # verifying P2WPKH transactions
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wpkh":       
                     transactions.add(file_name)
                     is_valid = verify_p2wpkh(data, j)                 
@@ -149,11 +162,11 @@ for i in range(len(files)):
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
-            for j in range(len(data['vin'])-1):
+            for j in range(len(data['vin'])-1): # Eliminating Transactions with different 'scriptpubkey_type's in their inputs to avoid error in wTXID calculations
                 if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
                     invalid_transactions.add(file_name)
                     break
-            for j in range(len(data['vin'])):
+            for j in range(len(data['vin'])): # verifying P2SH transactions
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
                     transactions.add(file_name)
                     is_valid = verify_p2sh(data, j)                 
@@ -168,11 +181,11 @@ for i in range(len(files)):
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
-            for j in range(len(data['vin'])-1):
+            for j in range(len(data['vin'])-1): # Eliminating Transactions with different 'scriptpubkey_type's in their inputs to avoid error in wTXID calculations
                 if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
                     invalid_transactions.add(file_name)
                     break
-            for j in range(len(data['vin'])):
+            for j in range(len(data['vin'])): # verifying P2WSH transactions
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2wsh":       
                     transactions.add(file_name)
                     is_valid = verify_p2wsh(data, j)                 
@@ -187,11 +200,11 @@ for i in range(len(files)):
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
-            for j in range(len(data['vin'])-1):
+            for j in range(len(data['vin'])-1): # Eliminating Transactions with different 'scriptpubkey_type's in their inputs to avoid error in wTXID calculations
                 if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
                     invalid_transactions.add(file_name)
                     break
-            for j in range(len(data['vin'])):
+            for j in range(len(data['vin'])): # P2TR transactions are assumed to be valid as Schnorr are out of scope
                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "v1_p2tr":       
                     transactions.add(file_name)
 
@@ -204,18 +217,17 @@ for tx in transactions:
     if tx not in invalid_transactions:
         valid_transactions.add(tx)
 
-fees = 0
-transaction_fees = {}
-wtxids = []
-wtxid_dict = {}
-block_weight = 320 # size of block header at start
-initial_block_weight = 320
+fees = 0 # total fees during mining
+transaction_fees = {} # mapping of transaction file name to its fees
+wtxids = [] # list of wtxids
+wtxid_dict = {} # mapping of txids to wtxids
+block_weight = 320 # block weight at start
 wtxids.append("0"*64)
 for file_name in valid_transactions:
     with open('mempool/' + file_name, 'r') as file:
         try:
             block_weight += int(tx_weight(data))
-            if block_weight > 3800000:
+            if block_weight > 3800000: # leaving buffer of 200000 WBUs
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
@@ -239,13 +251,12 @@ for file_name in transaction_fees:
         try:
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            # print(txid)
-            wtxids.append(bytes.fromhex(wtxid_dict[txid])[::-1].hex())
+            wtxids.append(bytes.fromhex(wtxid_dict[txid])[::-1].hex()) # using wtxid_dict and transaction fees, wtxids order is corrected as per `transaction_fees`
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
-block_arr = []
+block_arr = [] # list of elements to be added to `output.txt`
 
-with open("coinbase.json", 'r') as file:
+with open("coinbase.json", 'r') as file: # Drafting the coinbase transaction
     try:
         coinbase_data = json.load(file)
         coinbase_data['vin'][0]['scriptsig'] = ""
@@ -262,23 +273,23 @@ with open("coinbase.json", 'r') as file:
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON in file {file}: {e}")
 
-block_arr.append(serialize(coinbase_data)[0])
-block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
+block_arr.append(serialize(coinbase_data)[0]) # adding segwit-serialized coinbase transaction
+block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex()) # adding coinbase transaction ID
 
 for txname in transaction_fees:
     with open('mempool/' + txname, 'r') as file:
         try:
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            block_arr.append(txid)
+            block_arr.append(txid) # adding TXIDs of valid transactions
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
 block_header = construct_block_header(block_arr[1:])
-block_arr = [block_header] + block_arr
+block_arr = [block_header] + block_arr # adding block header at the start
     
 try:
-    with open("output.txt", 'w') as file:
+    with open("output.txt", 'w') as file: # writing our block array to the `output.txt` file
         for element in block_arr[:2]:
             file.write(element + '\n')
         for element in block_arr[2:]:

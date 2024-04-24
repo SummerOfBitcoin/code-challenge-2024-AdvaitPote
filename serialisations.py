@@ -17,18 +17,27 @@ import bech32
 import binascii
 
 def bech_32(data):
+    """
+    Returns the bech32 encoded address from pubkey
+    """
     spk = binascii.unhexlify(data)
     version = spk[0] - 0x50 if spk[0] else 0
     program = spk[2:]
     return bech32.encode('bc', version, program)
 
 def hash160(data):
+    """
+    Returns RIPEMD160(SHA256(data))
+    """
     sha256_hash = hashlib.sha256(data).digest()
     ripemd160_hash = hashlib.new('ripemd160', sha256_hash).digest()
     return ripemd160_hash
 
-def decode_sig(der_signature_bytes):
-    der_signature_bytes = bytes.fromhex(der_signature_bytes)
+def decode_sig(der_signature):
+    """
+    Converts DER encoded signature to (R+S) form
+    """
+    der_signature_bytes = bytes.fromhex(der_signature)
     r, s = decode_dss_signature(der_signature_bytes)
     r = hex(r)[2:]  
     s = hex(s)[2:]
@@ -37,6 +46,9 @@ def decode_sig(der_signature_bytes):
     return (r+s)
 
 def compact_size(value):
+    """
+    Returns Compact size of an integer
+    """
     if value < 0xfd:
         return bytes([value])
     elif value <= 0xffff:
@@ -47,6 +59,9 @@ def compact_size(value):
         return b'\xff' + value.to_bytes(8, 'little')
     
 def serialize(data):
+    """
+    Returns a two element tuple of a segwit serialization and legacy serialization from transaction data
+    """
     transaction = "0" + str(data['version']) + "0"*6
     witnesses = [False]*len(data['vin'])
     index = 0
@@ -86,6 +101,9 @@ def serialize(data):
     return (transaction, serialize_review)
 
 def tx_weight(data):
+    """
+    Calculates Transaction weight in WBUs from transaction data
+    """
     weight = len(serialize(data)[0])*4 - 3*(4) # version and marker to be subtracted
     witness_script_len = 0
     for input in data['vin']:
@@ -98,6 +116,9 @@ def tx_weight(data):
     return int(weight/2)
 
 def preimage(data, i, is_p2wsh=False):
+    """
+    Calculates and returns the preimage of a transaction to be used to verify segwit signatures 
+    """
     input = data['vin'][i]
     transaction = serialize(data)[0]
     version = transaction[:8] #
