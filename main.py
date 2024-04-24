@@ -118,20 +118,6 @@ for i in range(len(files)):
                         if not is_valid:
                             invalid_transactions.add(file_name)
                             break
-            # for j in range(len(data['vin'])):
-            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wpkh":       
-            #         transactions.add(file_name)
-            #         is_valid = verify_p2wpkh(data, j)                 
-            #         if not is_valid:
-            #             invalid_transactions.add(file_name)
-                        # break
-            # for j in range(len(data['vin'])):
-            #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wsh":       
-            #         transactions.add(file_name)
-            #         is_valid = verify_p2wsh(data, j)                 
-            #         if not is_valid:
-            #             invalid_transactions.add(file_name)
-            #             break
 
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
@@ -149,21 +135,6 @@ for i in range(len(files)):
                     if not is_valid:
                         invalid_transactions.add(file_name)
                         break
-                    
-#             for j in range(len(data['vin'])):
-#                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "v0_p2wsh":       
-#                     is_valid = verify_p2wsh(data, j)                 
-#                     if not is_valid:
-#                         invalid_transactions.add(file_name)
-#                         break
-
-#             # for j in range(len(data['vin'])):
-#             #     if data['vin'][j]['prevout']['scriptpubkey_type'] == "p2sh":       
-#             #         transactions.add(file_name)
-#             #         is_valid = verify_p2sh(data, j)                 
-#             #         if not is_valid:
-#             #             invalid_transactions.add(file_name)
-#             #             break
 
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
@@ -206,44 +177,31 @@ for i in range(len(files)):
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
+for i in range(len(files)): 
+    file_name = files[i]
+    with open('mempool/' + file_name, 'r') as file:
+        try:
+            data = json.load(file)
+            for j in range(len(data['vin'])-1):
+                if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
+                    invalid_transactions.add(file_name)
+                    break
+            for j in range(len(data['vin'])):
+                if data['vin'][j]['prevout']['scriptpubkey_type'] == "v1_p2tr":       
+                    transactions.add(file_name)
+
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON in file {file}: {e}")
+
 filename = "output.txt"
 
-# for element in transactions:
-    # print(element)
-# print(valid_transactions)
-
 valid_transactions_new = set([])
-
-# try:
-#     with open(filename, 'r') as file:
-#         # Read each line and append to the elements list
-#         for line in file:
-#             valid_transactions_new.add(line.strip())  # Remove whitespace characters like '\n'
-# except FileNotFoundError:
-#     print(f"Error: File '{filename}' not found.")
 
 for tx in transactions:
     if tx not in invalid_transactions:
         valid_transactions.add(tx)
 
-with open("filename.txt", 'w') as f:
-    for tx in sorted(valid_transactions):
-        f.write(tx)
-        f.write("\n")
-
-try:
-    with open("filename.txt", 'r') as file:
-        # Read each line and append to the elements list
-        for line in file:
-            valid_transactions_new.add(str(line.strip()))  # Remove whitespace characters like '\n'
-except FileNotFoundError:
-    print(f"Error: File txs.txt not found.")
-
-# print(valid_transactions_new)
-
-# print(len(invalid_transactions))
 print(len(valid_transactions_new))
-# print(len(transactions))
 
 fees = 0
 transaction_fees = {}
@@ -251,9 +209,8 @@ wtxids = []
 wtxid_dict = {}
 block_weight = 320 # size of block header at start
 initial_block_weight = 320
-# for i in range(len(valid_transactions)):
 wtxids.append("0000000000000000000000000000000000000000000000000000000000000000")
-for file_name in valid_transactions_new:
+for file_name in valid_transactions:
     # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
@@ -262,13 +219,8 @@ for file_name in valid_transactions_new:
                 break
             data = json.load(file)
             txid = sha256(sha256(bytes.fromhex(serialize(data)[1])).digest()).digest().hex()
-            # print(block_weight)
             wtxid = sha256(sha256(bytes.fromhex(serialize(data)[0])).digest()).digest().hex()
             wtxid_dict[txid] = wtxid
-            # print(file_name)
-            # print(wtxid)
-            # wtxids.append(bytes.fromhex(wtxid)[::-1].hex())
-            # print(wtxids)
             input_sum = 0
             output_sum = 0
             for input in data['vin']:
@@ -279,14 +231,10 @@ for file_name in valid_transactions_new:
             fees += (input_sum - output_sum)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
-# print(wtxid_dict)
-# wtxids = wtxids[:-1]
 print(block_weight)
-# print(wtxids)
 
 transaction_fees = dict(sorted(transaction_fees.items(), key=lambda item: item[1], reverse=True))
 for file_name in transaction_fees:
-    # file_name = valid_transactions[i]
     with open('mempool/' + file_name, 'r') as file:
         try:
             data = json.load(file)
@@ -295,9 +243,6 @@ for file_name in transaction_fees:
             wtxids.append(bytes.fromhex(wtxid_dict[txid])[::-1].hex())
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
-# print(transaction_fees)
-# print(transaction_fees)
-
 block_arr = []
 
 with open("coinbase.json", 'r') as file:
@@ -321,8 +266,6 @@ block_arr.append(serialize(coinbase_data)[0])
 block_arr.append(sha256(sha256(bytes.fromhex(serialize(coinbase_data)[1])).digest()).digest().hex())
 
 for txname in transaction_fees:
-    # if block_weight > 2000: 
-        # break
     with open('mempool/' + txname, 'r') as file:
         try:
             data = json.load(file)
@@ -335,13 +278,10 @@ block_header = construct_block_header(block_arr[1:])
 block_arr = [block_header] + block_arr
     
 try:
-    # Open the file in write mode
     with open("output.txt", 'w') as file:
-        # Write each element of the list to the file
         for element in block_arr[:2]:
             file.write(element + '\n')
         for element in block_arr[2:]:
             file.write(bytes.fromhex(element)[::-1].hex() + '\n') 
-
 except Exception as e:
     print(f"Error writing to file: {e}")
