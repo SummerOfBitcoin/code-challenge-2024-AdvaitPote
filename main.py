@@ -195,21 +195,21 @@ for i in range(len(files)):
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON in file {file}: {e}")
 
-for i in range(len(files)): 
-    file_name = files[i]
-    with open('mempool/' + file_name, 'r') as file:
-        try:
-            data = json.load(file)
-            for j in range(len(data['vin'])-1): # Eliminating Transactions with different 'scriptpubkey_type's in their inputs to avoid error in wTXID calculations
-                if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
-                    invalid_transactions.add(file_name)
-                    break
-            for j in range(len(data['vin'])): # P2TR transactions are assumed to be valid as Schnorr are out of scope
-                if data['vin'][j]['prevout']['scriptpubkey_type'] == "v1_p2tr":       
-                    transactions.add(file_name)
+# for i in range(len(files)): 
+#     file_name = files[i]
+#     with open('mempool/' + file_name, 'r') as file:
+#         try:
+#             data = json.load(file)
+#             for j in range(len(data['vin'])-1): # Eliminating Transactions with different 'scriptpubkey_type's in their inputs to avoid error in wTXID calculations
+#                 if data['vin'][j]['prevout']['scriptpubkey_type'] != data['vin'][j+1]['prevout']['scriptpubkey_type']:
+#                     invalid_transactions.add(file_name)
+#                     break
+#             for j in range(len(data['vin'])): # P2TR transactions are assumed to be valid as Schnorr signatures are out of scope
+#                 if data['vin'][j]['prevout']['scriptpubkey_type'] == "v1_p2tr":       
+#                     transactions.add(file_name)
 
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON in file {file}: {e}")
+#         except json.JSONDecodeError as e:
+#             print(f"Error decoding JSON in file {file}: {e}")
 
 filename = "output.txt"
 
